@@ -146,25 +146,22 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
-    def get_is_favorited(self, obj):
-        """Проверка, в избранном ли рецепт."""
+    def check_user_status(self, obj, model_class):
+        """Проверка наличия рецепта в переданном классе модели."""
         user = self.context.get('request')
         return bool(
             user
             and user.user.is_authenticated
-            and FavoriteRecipe.objects.filter(recipe=obj,
-                                              user=user.user).exists()
+            and model_class.objects.filter(recipe=obj, user=user.user).exists()
         )
+
+    def get_is_favorited(self, obj):
+        """Проверка, в избранном ли рецепт."""
+        return self.check_user_status(obj, FavoriteRecipe)
 
     def get_is_in_shopping_cart(self, obj):
         """Проверка, в корзине ли рецепт."""
-        user = self.context.get('request')
-        return bool(
-            user
-            and user.user.is_authenticated
-            and ShoppingCart.objects.filter(recipe=obj,
-                                            user=user.user).exists()
-        )
+        return self.check_user_status(obj, ShoppingCart)
 
 
 class IngredientRecipeWriteSerializer(serializers.ModelSerializer):
